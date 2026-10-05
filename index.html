@@ -109,10 +109,10 @@ const DEFAULT_SETTINGS = {
   email:'', phone:'', wfhUrl:'',
   paypal:{handle:'',link:''}, venmo:{handle:''}, zelle:{contact:''}, wise:{link:''},
   rates:[
-    {id:'r1',name:'Half day (4 hrs)',amount:400},
-    {id:'r2',name:'Full day (8 hrs)',amount:700},
-    {id:'r3',name:'Mixing (per song)',amount:150},
-    {id:'r4',name:'Mastering (per song)',amount:75},
+    {id:'r1',name:'Half day (4 hrs)',amount:''},
+    {id:'r2',name:'Full day (8 hrs)',amount:''},
+    {id:'r3',name:'Mixing (per song)',amount:''},
+    {id:'r4',name:'Mastering (per song)',amount:''},
   ]
 };
 
@@ -497,7 +497,7 @@ function SessionsView(props){
       h('div',{style:{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}},
         h(Btn,{onClick:function(){onExport(false);},disabled:newCount===0,style:{fontSize:13,padding:'8px 12px',opacity:newCount===0?0.5:1}},'⬇ Export CSV ('+newCount+' new)'),
         h(Btn,{onClick:function(){onExport(true);},style:{fontSize:13,padding:'8px 12px'}},'Export all'),
-        h(Btn,{onClick:onNew,cls:'acc',style:{fontSize:13,padding:'8px 15px'}},'+ New session')
+        h(Btn,{onClick:onNew,cls:'acc',style:{fontSize:13,padding:'8px 15px'}},'+ New InVoice')
       )
     ),
     h('div',{className:'stats-grid',style:{marginBottom:22}},
@@ -592,7 +592,7 @@ function SessionForm(props){
   return h('div',null,
     h('div',{style:{display:'flex',alignItems:'center',gap:12,marginBottom:duplicateFrom&&!session?8:22}},
       h('button',{onClick:onCancel,style:{background:'none',border:'none',color:'var(--text2)',cursor:'pointer',fontSize:13}},'← Back'),
-      h('h1',{style:{fontSize:18,fontWeight:600,margin:0}},session?'Edit session':(duplicateFrom?'Duplicate session':'New session'))
+      h('h1',{style:{fontSize:18,fontWeight:600,margin:0}},session?'Edit session':(duplicateFrom?'Duplicate session':'New InVoice'))
     ),
     duplicateFrom&&!session&&h('div',{style:{fontSize:12,color:'var(--text2)',marginBottom:14}},'Duplicated from invoice '+(duplicateFrom.invoiceNumber||'—')+' — review details and save to create this new session.'),
     h('div',{className:'card',style:{marginBottom:14}},
@@ -613,10 +613,10 @@ function SessionForm(props){
         h('span',{className:'sec-title',style:{margin:0}},'Services'),
         h('span',{style:{fontSize:18,fontWeight:600,color:'var(--acc)'}},'Total: $'+total.toFixed(2))
       ),
-      (settings.rates||[]).length>0&&h('div',{style:{marginBottom:12}},
+      (settings.rates||[]).filter(function(r){return parseFloat(r.amount)>0;}).length>0&&h('div',{style:{marginBottom:12}},
         h('div',{style:{fontSize:11,color:'var(--text3)',marginBottom:7}},'Quick add:'),
         h('div',{style:{display:'flex',flexWrap:'wrap',gap:6}},
-          settings.rates.map(function(r){return h('button',{key:r.id,onClick:function(){addPreset(r);},className:'btn btn-sec',style:{fontSize:11}},r.name+' — $'+r.amount);})
+          settings.rates.filter(function(r){return parseFloat(r.amount)>0;}).map(function(r){return h('button',{key:r.id,onClick:function(){addPreset(r);},className:'btn btn-sec',style:{fontSize:11}},r.name+' — $'+r.amount);})
         )
       ),
       (form.lineItems||[]).length>0&&h('div',{style:{display:'flex',flexDirection:'column',gap:6,marginBottom:10}},
@@ -641,7 +641,7 @@ function SessionForm(props){
       h('div',{style:{flex:1}}),
       h('button',{onClick:onCancel,style:{background:'none',border:'none',color:'var(--text2)',cursor:'pointer',padding:'8px 14px'}},'Cancel'),
       h(Btn,{onClick:function(){onSave(form,{sendAfter:true});},style:{fontSize:14,padding:'8px 20px'}},'✉ Save & send'),
-      h(Btn,{onClick:function(){onSave(form);},cls:'acc',style:{fontSize:14,padding:'8px 20px'}},'Save session')
+      h(Btn,{onClick:function(){onSave(form);},cls:'acc',style:{fontSize:14,padding:'8px 20px'}},'Save InVoice')
     )
   );
 }
@@ -758,11 +758,11 @@ function SettingsView(props){
     h('div',{className:'card',style:{marginBottom:14}},
       h('div',{className:'sec-title'},'Payment handles'),
       h('div',{className:'grid2'},
-        h('div',null,h('label',{className:'lbl'},'PayPal username'),h('input',{className:'inp',value:form.paypal&&form.paypal.handle||'',onChange:function(e){set('paypal.handle',e.target.value);},placeholder:'masondouglas'})),
-        h('div',null,h('label',{className:'lbl'},'PayPal.me link'),h('input',{className:'inp',value:form.paypal&&form.paypal.link||'',onChange:function(e){set('paypal.link',e.target.value);},placeholder:'https://paypal.me/...'})),
-        h('div',null,h('label',{className:'lbl'},'Venmo handle'),h('input',{className:'inp',value:form.venmo&&form.venmo.handle||'',onChange:function(e){set('venmo.handle',e.target.value);},placeholder:'masondouglas'})),
-        h('div',null,h('label',{className:'lbl'},'Zelle (phone or email)'),h('input',{className:'inp',value:form.zelle&&form.zelle.contact||'',onChange:function(e){set('zelle.contact',e.target.value);},placeholder:'(615) 555-0100'})),
-        h('div',null,h('label',{className:'lbl'},'Wise link'),h('input',{className:'inp',value:form.wise&&form.wise.link||'',onChange:function(e){set('wise.link',e.target.value);},placeholder:'https://wise.com/pay/me/...'}))
+        h('div',null,h('label',{className:'lbl'},'PayPal username'),h('input',{className:'inp',value:form.paypal&&form.paypal.handle||'',onChange:function(e){set('paypal.handle',e.target.value);},placeholder:'PayPal'})),
+        h('div',null,h('label',{className:'lbl'},'PayPal.me link'),h('input',{className:'inp',value:form.paypal&&form.paypal.link||'',onChange:function(e){set('paypal.link',e.target.value);},placeholder:'PayPal.me'})),
+        h('div',null,h('label',{className:'lbl'},'Venmo handle'),h('input',{className:'inp',value:form.venmo&&form.venmo.handle||'',onChange:function(e){set('venmo.handle',e.target.value);},placeholder:'Venmo'})),
+        h('div',null,h('label',{className:'lbl'},'Zelle (phone or email)'),h('input',{className:'inp',value:form.zelle&&form.zelle.contact||'',onChange:function(e){set('zelle.contact',e.target.value);},placeholder:'Zelle'})),
+        h('div',null,h('label',{className:'lbl'},'Wise link'),h('input',{className:'inp',value:form.wise&&form.wise.link||'',onChange:function(e){set('wise.link',e.target.value);},placeholder:'Wise'}))
       )
     ),
     h('div',{className:'card',style:{marginBottom:14}},
@@ -776,7 +776,7 @@ function SettingsView(props){
             h('input',{className:'inp',style:{flex:1},value:r.name,onChange:function(e){upRate(r.id,'name',e.target.value);},placeholder:'Service name'}),
             h('div',{style:{position:'relative',width:96}},
               h('span',{style:{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',color:'var(--text3)',pointerEvents:'none'}},'$'),
-              h('input',{className:'inp',style:{paddingLeft:22},type:'number',value:r.amount,onChange:function(e){upRate(r.id,'amount',parseFloat(e.target.value)||0);}})
+              h('input',{className:'inp',style:{paddingLeft:22},type:'number',value:r.amount,placeholder:'0',onChange:function(e){upRate(r.id,'amount',e.target.value===''?'':parseFloat(e.target.value));}})
             ),
             h('button',{onClick:function(){remRate(r.id);},style:{background:'none',border:'none',color:'var(--text3)',cursor:'pointer',fontSize:16}},'✕')
           );
