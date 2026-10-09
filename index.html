@@ -7,28 +7,35 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
     :root {
-      --bg:#f5f4f0; --card:#fff; --card2:#eceae4;
-      --border:rgba(0,0,0,.08); --border-s:rgba(0,0,0,.14);
-      --text:#1a1a1a; --text2:#6b6560; --text3:#9a9590;
+      color-scheme: dark;
+      --display:'Bebas Neue','Oswald','Arial Narrow',Impact,sans-serif;
+      --mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+      --bg:#0a0a0f; --card:#14141b; --card2:#1d1d27;
+      --border:rgba(255,255,255,.08); --border-s:rgba(255,255,255,.16);
+      --text:#f6eef2; --text2:#b9a9b2; --text3:#7f7179;
       --radius:8px;
-      --acc:#BA7517; --acc-bg:#FAEEDA; --acc-bo:#EF9F27;
-      --ok:#166534; --ok-bg:#dcfce7; --ok-bo:#86efac;
-      --err:#991b1b; --err-bg:#fee2e2; --err-bo:#fca5a5;
-      --sent-bg:#FAEEDA; --sent-co:#BA7517; --sent-bo:#EF9F27;
-      --passed-bg:#f3f4f6; --passed-co:#6b7280; --passed-bo:#d1d5db;
-      --cut-bg:#dcfce7; --cut-co:#166534; --cut-bo:#86efac;
+      --acc:#ff6fae; --acc-bg:rgba(255,111,174,.14); --acc-bo:rgba(255,111,174,.5);
+      --grad:linear-gradient(135deg,#ff6fae 0%,#c0386f 100%);
+      --ok:#6ee7a0; --ok-bg:rgba(34,197,94,.14); --ok-bo:rgba(110,231,160,.4);
+      --err:#ff8a8a; --err-bg:rgba(239,68,68,.14); --err-bo:rgba(255,138,138,.4);
+      --sent-bg:rgba(255,111,174,.14); --sent-co:#ff6fae; --sent-bo:rgba(255,111,174,.5);
+      --passed-bg:rgba(255,255,255,.07); --passed-co:#a89ca3; --passed-bo:rgba(255,255,255,.18);
+      --cut-bg:rgba(34,197,94,.14); --cut-co:#6ee7a0; --cut-bo:rgba(110,231,160,.4);
     }
     input,select,textarea,button { font-family:inherit; font-size:14px; }
     .inp { width:100%; padding:8px 10px; color:var(--text); background:var(--card); border:0.5px solid var(--border-s); border-radius:var(--radius); outline:none; }
-    .inp:focus { border-color:var(--acc); box-shadow:0 0 0 3px rgba(186,117,23,.1); }
+    .inp:focus { border-color:var(--acc); box-shadow:0 0 0 3px rgba(255,111,174,.18); }
     .lbl { display:block; font-size:11px; font-weight:500; text-transform:uppercase; letter-spacing:1px; color:var(--text2); margin-bottom:6px; }
     .btn { display:inline-flex; align-items:center; gap:5px; padding:7px 13px; font-size:13px; font-weight:500; border-radius:var(--radius); cursor:pointer; border:0.5px solid; }
     .btn:hover { opacity:.88; }
-    .btn-acc { background:var(--acc-bg); color:var(--acc); border-color:var(--acc-bo); }
+    .btn-acc { background:var(--grad); color:#1a0f14; border-color:transparent; font-weight:600; }
     .btn-sec { background:var(--card2); color:var(--text2); border-color:var(--border-s); }
     .btn-dan { background:var(--err-bg); color:var(--err); border-color:var(--err-bo); }
     .card { background:var(--card); border:0.5px solid var(--border); border-radius:12px; padding:20px; }
@@ -52,7 +59,7 @@
     .help-p { font-size:13.5px; color:var(--text2); line-height:1.65; margin-bottom:10px; }
     .help-p strong { color:var(--text); }
     .mock { background:var(--bg); border:1px dashed var(--border-s); border-radius:10px; padding:14px; margin:4px 0 12px; pointer-events:none; user-select:none; }
-    .mock-cap { font-size:10px; text-transform:uppercase; letter-spacing:1.5px; color:var(--text3); margin-bottom:10px; font-weight:600; }
+    .mock-cap { font-size:10px; text-transform:uppercase; letter-spacing:1.5px; color:var(--text3); margin-bottom:10px; font-weight:600; font-family:var(--mono); }
     @media (max-width: 640px) {
       .main { padding:18px 14px; }
       .header { flex-wrap:wrap; gap:10px; padding:12px 16px; }
@@ -64,6 +71,12 @@
       .li-actions { flex-wrap:wrap; }
       table { font-size:12px; }
     }
+    h1 { font-family:var(--display); font-weight:400 !important; font-size:32px !important; letter-spacing:.03em; line-height:1.05; }
+    h1 + p, .lbl, .sec-title, .chip, .tagline { font-family:var(--mono); }
+    .brand { font-family:var(--display); font-weight:400 !important; letter-spacing:.04em !important; text-transform:uppercase; background:var(--grad); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent !important; }
+    .header { background:rgba(20,20,27,.92); backdrop-filter:blur(8px); }
+    .list-item { transition:border-color .15s; }
+    .list-item:hover { border-color:rgba(255,111,174,.35); }
   </style>
 </head>
 <body>
@@ -102,10 +115,10 @@ const DEFAULT_SETTINGS = {
   email:'', phone:'', wfhUrl:'',
   paypal:{handle:'',link:''}, venmo:{handle:''}, zelle:{contact:''}, wise:{link:''},
   rates:[
-    {id:'r1',name:'Half day (4 hrs)',amount:400},
-    {id:'r2',name:'Full day (8 hrs)',amount:700},
-    {id:'r3',name:'Mixing (per song)',amount:150},
-    {id:'r4',name:'Mastering (per song)',amount:75},
+    {id:'r1',name:'Half day (4 hrs)',amount:''},
+    {id:'r2',name:'Full day (8 hrs)',amount:''},
+    {id:'r3',name:'Mixing (per song)',amount:''},
+    {id:'r4',name:'Mastering (per song)',amount:''},
   ]
 };
 
@@ -132,7 +145,7 @@ function dbToSession(db){
   return { id:db.id, clientName:db.client_name||'', clientEmail:db.client_email||'',
     songs:db.songs||'', dates:db.dates||'', notes:db.notes||'',
     lineItems:db.line_items||[], status:db.status||'draft',
-    invoiceNumber:db.invoice_number||'', createdAt:db.created_at };
+    invoiceNumber:db.invoice_number||'', createdAt:db.created_at, exportedAt:db.exported_at||null };
 }
 function sessionToDb(s,userId){
   return { user_id:userId, client_name:s.clientName||'', client_email:s.clientEmail||'',
@@ -180,6 +193,14 @@ async function patchStatus(id,status){
   var r=await sb.schema('session_log').from('ba_sessions').update({status:status,updated_at:new Date().toISOString()}).eq('id',id);
   if(r.error) throw r.error;
 }
+async function markExported(ids,ts){
+  var r=await sb.schema('session_log').from('ba_sessions').update({exported_at:ts}).in('id',ids);
+  if(r.error) throw r.error;
+}
+async function clearExported(id){
+  var r=await sb.schema('session_log').from('ba_sessions').update({exported_at:null}).eq('id',id);
+  if(r.error) throw r.error;
+}
 async function fetchSettings(userId){
   var r=await sb.schema('session_log').from('ba_settings').select('*').eq('user_id',userId).maybeSingle();
   if(r.error) throw r.error;
@@ -188,6 +209,34 @@ async function fetchSettings(userId){
 async function saveSettings(s,userId){
   var r=await sb.schema('session_log').from('ba_settings').upsert(settingsToDb(s,userId),{onConflict:'user_id'});
   if(r.error) throw r.error;
+}
+
+// ── QUICKBOOKS CSV EXPORT ─────────────────────────────────────────────────────
+function csvCell(v){
+  var t=String(v==null?'':v);
+  return /[",\n\r]/.test(t)?'"'+t.replace(/"/g,'""')+'"':t;
+}
+function csvDate(d){
+  var x=d?new Date(d):new Date();
+  return String(x.getMonth()+1).padStart(2,'0')+'/'+String(x.getDate()).padStart(2,'0')+'/'+x.getFullYear();
+}
+function downloadInvoicesCsv(list){
+  var cols=['InvoiceNo','Customer','CustomerEmail','InvoiceDate','DueDate','ItemDescription','Qty','Rate','Amount','Memo'];
+  var rows=[cols.join(',')];
+  list.forEach(function(sess){
+    var date=csvDate(sess.createdAt);
+    var memo=[sess.songs,sess.dates].filter(Boolean).join(' · ');
+    (sess.lineItems||[]).forEach(function(i){
+      var qty=parseFloat(i.qty)||0, rate=parseFloat(i.rate)||0;
+      rows.push([sess.invoiceNumber,sess.clientName,sess.clientEmail,date,date,i.name,qty,rate.toFixed(2),(qty*rate).toFixed(2),memo].map(csvCell).join(','));
+    });
+  });
+  var blob=new Blob(['\ufeff'+rows.join('\r\n')],{type:'text/csv;charset=utf-8;'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='invoices-'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(a.href);},1000);
 }
 
 // ── WFH CONTRACT ─────────────────────────────────────────────────────────────
@@ -413,7 +462,7 @@ function LoginScreen(){
   return h('div',{style:{minHeight:'100vh',display:'flex',alignItems:'center',justifyContent:'center',background:'var(--bg)'}},
     h('div',{style:{width:'100%',maxWidth:380,padding:'0 20px'}},
       h('div',{style:{textAlign:'center',marginBottom:32}},
-        h('div',{style:{fontSize:24,fontWeight:700,color:'var(--acc)',letterSpacing:'-.5px'}},'InVoice'),
+        h('div',{className:'brand',style:{fontSize:44}},'InVoice'),
         h('div',{style:{fontSize:11,textTransform:'uppercase',letterSpacing:'2px',color:'var(--text3)',marginTop:4}},'Session Management')
       ),
       h('div',{className:'card',style:{padding:28}},
@@ -434,7 +483,13 @@ function LoginScreen(){
 
 // ── SESSIONS VIEW ─────────────────────────────────────────────────────────────
 function SessionsView(props){
-  var sessions=props.sessions,onNew=props.onNew,onEdit=props.onEdit,onView=props.onView,onDelete=props.onDelete,onStatus=props.onStatus,onDuplicate=props.onDuplicate;
+  var sessions=props.sessions,onNew=props.onNew,onEdit=props.onEdit,onView=props.onView,onDelete=props.onDelete,onStatus=props.onStatus,onDuplicate=props.onDuplicate,onExport=props.onExport,onClearExport=props.onClearExport;
+  var newCount=sessions.filter(function(s){return s.status!=='draft'&&!s.exportedAt;}).length;
+  var _q=useState(''),q=_q[0],setQ=_q[1];
+  var qq=q.trim().toLowerCase();
+  var shown=qq?sessions.filter(function(s){
+    return [s.clientName,s.clientEmail,s.songs,s.dates,s.notes,s.invoiceNumber,s.status].join(' ').toLowerCase().indexOf(qq)>-1;
+  }):sessions;
   var paid=sessions.filter(function(s){return s.status==='paid';}).reduce(function(t,s){return t+calcTotal(s);},0);
   var outstanding=sessions.filter(function(s){return s.status==='sent';}).reduce(function(t,s){return t+calcTotal(s);},0);
   var counts={};
@@ -445,7 +500,11 @@ function SessionsView(props){
         h('h1',{style:{fontSize:20,fontWeight:600,margin:0}},'Sessions'),
         h('p',{style:{fontSize:13,color:'var(--text2)',margin:'3px 0 0'}},'Session log and invoicing for Blue Amsterdam')
       ),
-      h(Btn,{onClick:onNew,cls:'acc',style:{fontSize:13,padding:'8px 15px'}},'+ New session')
+      h('div',{style:{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}},
+        h(Btn,{onClick:function(){onExport(false);},disabled:newCount===0,style:{fontSize:13,padding:'8px 12px',opacity:newCount===0?0.5:1}},'⬇ Export CSV ('+newCount+' new)'),
+        h(Btn,{onClick:function(){onExport(true);},style:{fontSize:13,padding:'8px 12px'}},'Export all'),
+        h(Btn,{onClick:onNew,cls:'acc',style:{fontSize:13,padding:'8px 15px'}},'+ New InVoice')
+      )
     ),
     h('div',{className:'stats-grid',style:{marginBottom:22}},
       [{label:'Total paid',value:'$'+paid.toLocaleString(),sub:(counts.paid||0)+' sessions'},
@@ -458,14 +517,19 @@ function SessionsView(props){
         );
       })
     ),
+    sessions.length>0&&h('div',{style:{marginBottom:14}},
+      h('input',{className:'inp',type:'search',value:q,onChange:function(e){setQ(e.target.value);},placeholder:'Search client, song, invoice #, date...'})
+    ),
     sessions.length===0
       ?h('div',{className:'empty'},
           h('div',{style:{fontSize:32,marginBottom:12}},'🎛'),
           h('div',{style:{fontSize:15,color:'var(--text2)',marginBottom:4}},'No sessions yet'),
           h('div',{style:{fontSize:13}},'Add your first Blue Amsterdam session to get started')
         )
+      :shown.length===0
+      ?h('div',{className:'empty'},h('div',{style:{fontSize:14}},'No sessions match your search'))
       :h('div',{className:'list'},
-          sessions.map(function(s){
+          shown.map(function(s){
             var total=calcTotal(s);
             return h('div',{key:s.id,className:'list-item'},
               h('div',{style:{flex:1,minWidth:0}},
@@ -480,6 +544,13 @@ function SessionsView(props){
               h('div',{className:'li-total',style:{flexShrink:0}},
                 h('div',{style:{fontSize:18,fontWeight:600,color:'var(--acc)'}},'$'+total.toFixed(2)),
                 h('div',{style:{fontSize:11,color:'var(--text3)'}},s.invoiceNumber)
+              ),
+              h('div',{style:{width:16,flexShrink:0,textAlign:'center'}},
+                s.exportedAt&&h('span',{
+                  title:'Exported '+new Date(s.exportedAt).toLocaleDateString('en-US',{month:'short',day:'numeric'})+' — click to clear',
+                  onClick:function(){if(confirm('Clear the exported flag on '+(s.invoiceNumber||'this session')+'?'))onClearExport(s.id);},
+                  style:{color:'var(--ok)',fontSize:13,fontWeight:700,cursor:'pointer'}
+                },'✓')
               ),
               h('div',{className:'li-actions',style:{display:'flex',gap:5,flexShrink:0}},
                 h(Btn,{onClick:function(){onView(s);},cls:'acc'},'Invoice'),
@@ -527,7 +598,7 @@ function SessionForm(props){
   return h('div',null,
     h('div',{style:{display:'flex',alignItems:'center',gap:12,marginBottom:duplicateFrom&&!session?8:22}},
       h('button',{onClick:onCancel,style:{background:'none',border:'none',color:'var(--text2)',cursor:'pointer',fontSize:13}},'← Back'),
-      h('h1',{style:{fontSize:18,fontWeight:600,margin:0}},session?'Edit session':(duplicateFrom?'Duplicate session':'New session'))
+      h('h1',{style:{fontSize:18,fontWeight:600,margin:0}},session?'Edit session':(duplicateFrom?'Duplicate session':'New InVoice'))
     ),
     duplicateFrom&&!session&&h('div',{style:{fontSize:12,color:'var(--text2)',marginBottom:14}},'Duplicated from invoice '+(duplicateFrom.invoiceNumber||'—')+' — review details and save to create this new session.'),
     h('div',{className:'card',style:{marginBottom:14}},
@@ -548,10 +619,10 @@ function SessionForm(props){
         h('span',{className:'sec-title',style:{margin:0}},'Services'),
         h('span',{style:{fontSize:18,fontWeight:600,color:'var(--acc)'}},'Total: $'+total.toFixed(2))
       ),
-      (settings.rates||[]).length>0&&h('div',{style:{marginBottom:12}},
+      (settings.rates||[]).filter(function(r){return parseFloat(r.amount)>0;}).length>0&&h('div',{style:{marginBottom:12}},
         h('div',{style:{fontSize:11,color:'var(--text3)',marginBottom:7}},'Quick add:'),
         h('div',{style:{display:'flex',flexWrap:'wrap',gap:6}},
-          settings.rates.map(function(r){return h('button',{key:r.id,onClick:function(){addPreset(r);},className:'btn btn-sec',style:{fontSize:11}},r.name+' — $'+r.amount);})
+          settings.rates.filter(function(r){return parseFloat(r.amount)>0;}).map(function(r){return h('button',{key:r.id,onClick:function(){addPreset(r);},className:'btn btn-sec',style:{fontSize:11}},r.name+' — $'+r.amount);})
         )
       ),
       (form.lineItems||[]).length>0&&h('div',{style:{display:'flex',flexDirection:'column',gap:6,marginBottom:10}},
@@ -576,7 +647,7 @@ function SessionForm(props){
       h('div',{style:{flex:1}}),
       h('button',{onClick:onCancel,style:{background:'none',border:'none',color:'var(--text2)',cursor:'pointer',padding:'8px 14px'}},'Cancel'),
       h(Btn,{onClick:function(){onSave(form,{sendAfter:true});},style:{fontSize:14,padding:'8px 20px'}},'✉ Save & send'),
-      h(Btn,{onClick:function(){onSave(form);},cls:'acc',style:{fontSize:14,padding:'8px 20px'}},'Save session')
+      h(Btn,{onClick:function(){onSave(form);},cls:'acc',style:{fontSize:14,padding:'8px 20px'}},'Save InVoice')
     )
   );
 }
@@ -693,11 +764,11 @@ function SettingsView(props){
     h('div',{className:'card',style:{marginBottom:14}},
       h('div',{className:'sec-title'},'Payment handles'),
       h('div',{className:'grid2'},
-        h('div',null,h('label',{className:'lbl'},'PayPal username'),h('input',{className:'inp',value:form.paypal&&form.paypal.handle||'',onChange:function(e){set('paypal.handle',e.target.value);},placeholder:'masondouglas'})),
-        h('div',null,h('label',{className:'lbl'},'PayPal.me link'),h('input',{className:'inp',value:form.paypal&&form.paypal.link||'',onChange:function(e){set('paypal.link',e.target.value);},placeholder:'https://paypal.me/...'})),
-        h('div',null,h('label',{className:'lbl'},'Venmo handle'),h('input',{className:'inp',value:form.venmo&&form.venmo.handle||'',onChange:function(e){set('venmo.handle',e.target.value);},placeholder:'masondouglas'})),
-        h('div',null,h('label',{className:'lbl'},'Zelle (phone or email)'),h('input',{className:'inp',value:form.zelle&&form.zelle.contact||'',onChange:function(e){set('zelle.contact',e.target.value);},placeholder:'(615) 555-0100'})),
-        h('div',null,h('label',{className:'lbl'},'Wise link'),h('input',{className:'inp',value:form.wise&&form.wise.link||'',onChange:function(e){set('wise.link',e.target.value);},placeholder:'https://wise.com/pay/me/...'}))
+        h('div',null,h('label',{className:'lbl'},'PayPal username'),h('input',{className:'inp',value:form.paypal&&form.paypal.handle||'',onChange:function(e){set('paypal.handle',e.target.value);},placeholder:'PayPal'})),
+        h('div',null,h('label',{className:'lbl'},'PayPal.me link'),h('input',{className:'inp',value:form.paypal&&form.paypal.link||'',onChange:function(e){set('paypal.link',e.target.value);},placeholder:'PayPal.me'})),
+        h('div',null,h('label',{className:'lbl'},'Venmo handle'),h('input',{className:'inp',value:form.venmo&&form.venmo.handle||'',onChange:function(e){set('venmo.handle',e.target.value);},placeholder:'Venmo'})),
+        h('div',null,h('label',{className:'lbl'},'Zelle (phone or email)'),h('input',{className:'inp',value:form.zelle&&form.zelle.contact||'',onChange:function(e){set('zelle.contact',e.target.value);},placeholder:'Zelle'})),
+        h('div',null,h('label',{className:'lbl'},'Wise link'),h('input',{className:'inp',value:form.wise&&form.wise.link||'',onChange:function(e){set('wise.link',e.target.value);},placeholder:'Wise'}))
       )
     ),
     h('div',{className:'card',style:{marginBottom:14}},
@@ -711,7 +782,7 @@ function SettingsView(props){
             h('input',{className:'inp',style:{flex:1},value:r.name,onChange:function(e){upRate(r.id,'name',e.target.value);},placeholder:'Service name'}),
             h('div',{style:{position:'relative',width:96}},
               h('span',{style:{position:'absolute',left:10,top:'50%',transform:'translateY(-50%)',color:'var(--text3)',pointerEvents:'none'}},'$'),
-              h('input',{className:'inp',style:{paddingLeft:22},type:'number',value:r.amount,onChange:function(e){upRate(r.id,'amount',parseFloat(e.target.value)||0);}})
+              h('input',{className:'inp',style:{paddingLeft:22},type:'number',value:r.amount,placeholder:'0',onChange:function(e){upRate(r.id,'amount',e.target.value===''?'':parseFloat(e.target.value));}})
             ),
             h('button',{onClick:function(){remRate(r.id);},style:{background:'none',border:'none',color:'var(--text3)',cursor:'pointer',fontSize:16}},'✕')
           );
@@ -777,17 +848,17 @@ function HelpView(props){
         h('li',null,h('strong',null,'Studio contact'),' — your email and phone appear at the top of every invoice.'),
         h('li',null,h('strong',null,'WFH contract URL'),' — optional. If you host the contract online, clients get a download button in your email.'),
         h('li',null,h('strong',null,'Payment handles'),' — PayPal, Venmo, Zelle and Wise. Each one you fill in shows up on the invoice with a scannable QR code. Leave blank any you don\'t use.'),
-        h('li',null,h('strong',null,'Rate presets'),' — your usual prices (half day, full day, mixing…). These become one-click buttons when you build a session.')
+        h('li',null,h('strong',null,'Rate presets'),' — your usual services. Type a dollar amount next to each one you use; only presets with an amount show up as one-click buttons when you build an InVoice.')
       ),
       h(HelpP,null,'Press ',h('strong',null,'Save settings'),' when you\'re done. The button turns green and says "✓ Saved".')
     ),
 
     h(HelpStep,{num:'2',title:'Create a new session'},
-      h(HelpP,null,'On the ',h('strong',null,'Sessions'),' page, click ',h('strong',null,'+ New session'),'.'),
+      h(HelpP,null,'On the ',h('strong',null,'Sessions'),' page, click ',h('strong',null,'+ New InVoice'),'.'),
       h(HelpMock,{caption:'Sessions page'},
         h('div',{style:{display:'flex',justifyContent:'space-between',alignItems:'center'}},
           h('div',null,h('div',{style:{fontSize:16,fontWeight:600}},'Sessions'),h('div',{style:{fontSize:12,color:'var(--text2)'}},'Session log and invoicing')),
-          h(Btn,{cls:'acc',onClick:Noop},'+ New session')
+          h(Btn,{cls:'acc',onClick:Noop},'+ New InVoice')
         )
       ),
       h(HelpP,null,'Then fill in the form:'),
@@ -817,11 +888,11 @@ function HelpView(props){
         h('div',{style:{display:'flex',gap:8,justifyContent:'flex-end',flexWrap:'wrap'}},
           h('span',{style:{color:'var(--text2)',padding:'8px 14px'}},'Cancel'),
           h(Btn,{onClick:Noop},'✉ Save & send'),
-          h(Btn,{cls:'acc',onClick:Noop},'Save session')
+          h(Btn,{cls:'acc',onClick:Noop},'Save InVoice')
         )
       ),
       h('ul',{className:'help-p',style:{paddingLeft:20}},
-        h('li',null,h('strong',null,'Save session'),' — saves it and returns to your list.'),
+        h('li',null,h('strong',null,'Save InVoice'),' — saves it and returns to your list.'),
         h('li',null,h('strong',null,'✉ Save & send'),' — saves it, then starts the email to your client (see step 5).'),
         h('li',null,h('strong',null,'Cancel'),' — leaves without saving.')
       )
@@ -834,6 +905,7 @@ function HelpView(props){
         h('li',null,h('strong',null,'Outstanding'),' — invoices marked Sent that you haven\'t been paid for yet.'),
         h('li',null,h('strong',null,'All sessions'),' — how many you\'ve logged.')
       ),
+      h(HelpP,null,'Use the ',h('strong',null,'search box'),' above the list to find a session by client, song, invoice number, date or status. The ',h('strong',null,'⬇ Export CSV'),' button downloads your sent and paid invoices as a spreadsheet file (for QuickBooks); afterwards you\'ll be asked whether to mark them exported, which shows a small green ✓ on each row. ',h('strong',null,'Export all'),' re-downloads everything.'),
       h(HelpMock,{caption:'A session row'},
         h('div',{className:'list-item',style:{flexWrap:'wrap'}},
           h('div',{style:{flex:1,minWidth:150}},
@@ -934,7 +1006,10 @@ function App(){
   useEffect(function(){
     if(authState!=='authenticated'||!user)return;
     setDataLoading(true);
-    Promise.all([fetchSessions(),fetchSettings(user.id)]).then(function(results){
+    sb.rpc('join_app',{p_app:'session_log'}).then(function(r){
+      if(r.error) throw r.error;
+      return Promise.all([fetchSessions(),fetchSettings(user.id)]);
+    }).then(function(results){
       setSessions(results[0]);setSettings(results[1]);
     }).catch(function(err){setAppError(err.message);}).finally(function(){setDataLoading(false);});
   },[authState,user&&user.id]);
@@ -968,6 +1043,29 @@ function App(){
       setCurrent(function(c){return c&&c.id===id?Object.assign({},c,{status:status}):c;});
     }).catch(function(err){setAppError(err.message);});
   }
+  function handleExport(all){
+    var list=sessions.filter(function(x){return x.status!=='draft'&&(all||!x.exportedAt);});
+    if(!list.length){setAppError('Nothing to export.');return;}
+    downloadInvoicesCsv(list);
+    setTimeout(function(){
+      var todo=list.filter(function(x){return !x.exportedAt;});
+      var msg=todo.length
+        ?'Mark '+todo.length+' session'+(todo.length===1?'':'s')+' as exported?\n\nOK = mark exported\nCancel = leave unmarked (use this if the import failed)'
+        :null;
+      if(msg&&confirm(msg)){
+        var ts=new Date().toISOString();
+        var ids=todo.map(function(x){return x.id;});
+        markExported(ids,ts).then(function(){
+          setSessions(function(cur){return cur.map(function(x){return ids.indexOf(x.id)>-1?Object.assign({},x,{exportedAt:ts}):x;});});
+        }).catch(function(err){setAppError(err.message);});
+      }
+    },400);
+  }
+  function handleClearExport(id){
+    clearExported(id).then(function(){
+      setSessions(function(cur){return cur.map(function(x){return x.id===id?Object.assign({},x,{exportedAt:null}):x;});});
+    }).catch(function(err){setAppError(err.message);});
+  }
   function handleSaveSettings(s){
     saveSettings(s,user.id).then(function(){setSettings(s);}).catch(function(err){setAppError(err.message);});
   }
@@ -985,7 +1083,7 @@ function App(){
     ),
     h('div',{className:'header'},
       h('div',{onClick:function(){setPage('sessions');goList();},style:{cursor:'pointer'}},
-        h('div',{style:{fontSize:15,fontWeight:700,color:'var(--acc)',letterSpacing:'-.3px'}},'InVoice'),
+        h('div',{className:'brand',style:{fontSize:26,lineHeight:1}},'InVoice'),
         h('div',{style:{fontSize:10,textTransform:'uppercase',letterSpacing:2,color:'var(--text3)',marginTop:1}},'Session management')
       ),
       h('div',{style:{display:'flex',gap:4}},
@@ -995,11 +1093,11 @@ function App(){
       )
     ),
     h('div',{className:'main'},
-      page==='sessions'&&view==='list'&&h(SessionsView,{sessions:sessions,onNew:function(){setCurrent(null);setDuplicateFrom(null);setView('form');},onEdit:function(s){setCurrent(s);setDuplicateFrom(null);setView('form');},onView:function(s){setCurrent(s);setView('invoice');},onDelete:handleDeleteSession,onStatus:handleStatusChange,onDuplicate:handleDuplicateSession}),
+      page==='sessions'&&view==='list'&&h(SessionsView,{sessions:sessions,onNew:function(){setCurrent(null);setDuplicateFrom(null);setView('form');},onEdit:function(s){setCurrent(s);setDuplicateFrom(null);setView('form');},onView:function(s){setCurrent(s);setView('invoice');},onDelete:handleDeleteSession,onStatus:handleStatusChange,onDuplicate:handleDuplicateSession,onExport:handleExport,onClearExport:handleClearExport}),
       page==='sessions'&&view==='form'&&h(SessionForm,{session:current,settings:settings,nextInvoice:genInv(sessions),duplicateFrom:duplicateFrom,onCancel:goList,onSave:handleSaveSession,onStatus:handleStatusChange}),
       page==='sessions'&&view==='invoice'&&current&&h(InvoiceView,{session:current,settings:settings,onBack:goList,onEdit:function(){setView('form');},onPrintInvoice:function(){openPrintInvoice(current,settings);},onPrintWFH:function(){openPrintWFH(current);},onEmail:function(){openMailto(current,settings);},onStatus:handleStatusChange}),
-      page==='settings'&&h(SettingsView,{settings:settings,onSave:handleSaveSettings,userEmail:user.email,onLogout:function(){sb.auth.signOut();}}),
-      page==='help'&&h(HelpView,{onBack:function(){setPage('sessions');goList();}})
+      page==='help'&&h(HelpView,{onBack:function(){setPage('sessions');goList();}}),
+      page==='settings'&&h(SettingsView,{settings:settings,onSave:handleSaveSettings,userEmail:user.email,onLogout:function(){sb.auth.signOut();}})
     )
   );
 }
