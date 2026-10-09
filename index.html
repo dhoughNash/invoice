@@ -53,7 +53,8 @@
     .stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
     .two-col { display:grid; grid-template-columns:1fr 1fr; gap:28px; }
     .table-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; }
-    .li-total { text-align:right; }
+    .li-total { text-align:right; min-width:108px; }
+    .btn-status { min-width:98px; justify-content:center; }
     .help-step { display:flex; gap:14px; align-items:flex-start; }
     .help-num { flex-shrink:0; width:28px; height:28px; border-radius:50%; background:var(--acc-bg); color:var(--acc); border:0.5px solid var(--acc-bo); font-weight:700; font-size:13px; display:flex; align-items:center; justify-content:center; }
     .help-p { font-size:13.5px; color:var(--text2); line-height:1.65; margin-bottom:10px; }
@@ -67,7 +68,8 @@
       .two-col { grid-template-columns:1fr; gap:14px; }
       .stats-grid { grid-template-columns:1fr 1fr; gap:8px; }
       .list-item { flex-direction:column; align-items:stretch; gap:10px; }
-      .li-total { text-align:left; }
+      .li-total { text-align:left; min-width:0; }
+      .btn-status { min-width:0; }
       .li-actions { flex-wrap:wrap; }
       table { font-size:12px; }
     }
@@ -438,6 +440,15 @@ function openMailto(session,settings){
 }
 
 // ── SHARED COMPONENTS ─────────────────────────────────────────────────────────
+function CopyPlusIcon(props){
+  var sz=props&&props.size||16;
+  return h('svg',{width:sz,height:sz,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round','aria-hidden':'true',style:{display:'block'}},
+    h('path',{d:'M7 9.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667l0 -8.666'}),
+    h('path',{d:'M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1'}),
+    h('path',{d:'M11 14h6'}),
+    h('path',{d:'M14 11v6'})
+  );
+}
 function Badge(props){
   var s=STATUS_CFG[props.status]||STATUS_CFG.draft;
   return h('span',{className:'chip',style:{background:s.bg,color:s.co,borderColor:s.bo}},s.label);
@@ -555,8 +566,8 @@ function SessionsView(props){
               h('div',{className:'li-actions',style:{display:'flex',gap:5,flexShrink:0}},
                 h(Btn,{onClick:function(){onView(s);},cls:'acc'},'Invoice'),
                 h(Btn,{onClick:function(){onEdit(s);}},'Edit'),
-                h(Btn,{onClick:function(){onDuplicate(s);}},'Duplicate'),
-                s.status!=='paid'&&h(Btn,{onClick:function(){onStatus(s.id,s.status==='draft'?'sent':'paid');}},s.status==='draft'?'Mark sent':'Mark paid'),
+                h('button',{onClick:function(){onDuplicate(s);},title:'Duplicate','aria-label':'Duplicate',className:'btn btn-sec',style:{padding:'7px 9px'}},h(CopyPlusIcon,{size:16})),
+                h('button',{className:'btn btn-sec btn-status',onClick:function(){onStatus(s.id,s.status==='draft'?'sent':(s.status==='sent'?'paid':'sent'));}},s.status==='draft'?'Mark sent':(s.status==='sent'?'Mark paid':'Mark unpaid')),
                 h(Btn,{onClick:function(){if(confirm('Delete this session?'))onDelete(s.id);},cls:'dan'},'✕')
               )
             );
@@ -591,7 +602,7 @@ function SessionForm(props){
   function removeItem(id){setForm(function(f){return Object.assign({},f,{lineItems:f.lineItems.filter(function(i){return i.id!==id;})});});}
   function markSentFromForm(){
     if(!session||!onStatus)return;
-    var next=form.status==='draft'?'sent':'paid';
+    var next=form.status==='draft'?'sent':(form.status==='sent'?'paid':'sent');
     onStatus(session.id,next);
     set('status',next);
   }
@@ -643,7 +654,7 @@ function SessionForm(props){
       )
     ),
     h('div',{style:{display:'flex',justifyContent:'flex-end',gap:8,marginTop:4,flexWrap:'wrap'}},
-      session&&form.status!=='paid'&&h(Btn,{onClick:markSentFromForm,style:{fontSize:13}},form.status==='draft'?'✓ Mark sent':'✓ Mark paid'),
+      session&&h(Btn,{onClick:markSentFromForm,style:{fontSize:13}},form.status==='draft'?'✓ Mark sent':(form.status==='sent'?'✓ Mark paid':'↩ Mark unpaid')),
       h('div',{style:{flex:1}}),
       h('button',{onClick:onCancel,style:{background:'none',border:'none',color:'var(--text2)',cursor:'pointer',padding:'8px 14px'}},'Cancel'),
       h(Btn,{onClick:function(){onSave(form,{sendAfter:true});},style:{fontSize:14,padding:'8px 20px'}},'✉ Save & send'),
@@ -666,7 +677,7 @@ function InvoiceView(props){
     h('div',{style:{display:'flex',alignItems:'center',gap:8,marginBottom:18,flexWrap:'wrap'}},
       h('button',{onClick:onBack,style:{background:'none',border:'none',color:'var(--text2)',cursor:'pointer',fontSize:13}},'← Sessions'),
       h('div',{style:{flex:1}}),
-      onStatus&&session.status!=='paid'&&h(Btn,{onClick:function(){onStatus(session.id,session.status==='draft'?'sent':'paid');},style:{fontSize:12}},session.status==='draft'?'✓ Mark sent':'✓ Mark paid'),
+      onStatus&&h(Btn,{onClick:function(){onStatus(session.id,session.status==='draft'?'sent':(session.status==='sent'?'paid':'sent'));},style:{fontSize:12}},session.status==='draft'?'✓ Mark sent':(session.status==='sent'?'✓ Mark paid':'↩ Mark unpaid')),
       h(Btn,{onClick:onEdit},'✏ Edit'),
       h(Btn,{onClick:onPrintInvoice,cls:'acc',style:{fontSize:12}},'🖨 Invoice PDF'),
       h(Btn,{onClick:onPrintWFH,style:{fontSize:12}},'📋 WFH PDF'),
@@ -914,15 +925,15 @@ function HelpView(props){
           ),
           h('div',{className:'li-total'},h('div',{style:{fontSize:18,fontWeight:600,color:'var(--acc)'}},'$850.00'),h('div',{style:{fontSize:11,color:'var(--text3)'}},'BA-100926-1')),
           h('div',{className:'li-actions',style:{display:'flex',gap:5,flexWrap:'wrap'}},
-            h(Btn,{cls:'acc',onClick:Noop},'Invoice'),h(Btn,{onClick:Noop},'Edit'),h(Btn,{onClick:Noop},'Duplicate'),h(Btn,{onClick:Noop},'Mark paid'),h(Btn,{cls:'dan',onClick:Noop},'✕')
+            h(Btn,{cls:'acc',onClick:Noop},'Invoice'),h(Btn,{onClick:Noop},'Edit'),h('span',{className:'btn btn-sec',style:{padding:'7px 9px'}},h(CopyPlusIcon,{size:16})),h(Btn,{onClick:Noop},'Mark paid'),h(Btn,{cls:'dan',onClick:Noop},'✕')
           )
         )
       ),
       h('ul',{className:'help-p',style:{paddingLeft:20}},
         h('li',null,h('strong',null,'Invoice'),' — opens the invoice, where you can print or email it.'),
         h('li',null,h('strong',null,'Edit'),' — change any detail or service.'),
-        h('li',null,h('strong',null,'Duplicate'),' — makes a new session with the same client, song and services (great for repeat clients). Today\'s date and a fresh invoice number are filled in; nothing is saved until you click Save.'),
-        h('li',null,h('strong',null,'Mark sent / Mark paid'),' — moves the status forward.'),
+        h('li',null,h('strong',null,'Duplicate (the copy icon)'),' — hover over it to see its name. It makes a new session with the same client, song and services (great for repeat clients). Today\'s date and a fresh invoice number are filled in; nothing is saved until you click Save.'),
+        h('li',null,h('strong',null,'Mark sent / Mark paid / Mark unpaid'),' — moves the status forward. If you marked something paid by mistake, click Mark unpaid to put it back to Sent.'),
         h('li',null,h('strong',null,'✕'),' — deletes the session (you\'ll be asked to confirm).')
       )
     ),
