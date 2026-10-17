@@ -89,6 +89,8 @@
     .menu-it svg { color:var(--text2); }
     .menu-it:hover { background:rgba(255,255,255,.07); }
     .menu-it.on, .menu-it.on svg { color:var(--acc); }
+    .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,.62); display:flex; align-items:center; justify-content:center; padding:16px; z-index:200; }
+    .modal { width:100%; max-width:440px; max-height:100%; overflow:auto; background:var(--card); }
     .menu-sep { height:1px; background:var(--border); margin:6px 4px; }
     @media (max-width: 640px) {
       .header { grid-template-columns:1fr auto; row-gap:8px; }
@@ -239,7 +241,7 @@ function csvDate(d){
   var x=d?new Date(d):new Date();
   return String(x.getMonth()+1).padStart(2,'0')+'/'+String(x.getDate()).padStart(2,'0')+'/'+x.getFullYear();
 }
-function downloadInvoicesCsv(list){
+function downloadInvoicesCsv(list,label){
   var cols=['InvoiceNo','Customer','CustomerEmail','InvoiceDate','DueDate','ItemDescription','Qty','Rate','Amount','Memo'];
   var rows=[cols.join(',')];
   list.forEach(function(sess){
@@ -253,7 +255,7 @@ function downloadInvoicesCsv(list){
   var blob=new Blob(['\ufeff'+rows.join('\r\n')],{type:'text/csv;charset=utf-8;'});
   var a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
-  a.download='invoices-'+new Date().toISOString().slice(0,10)+'.csv';
+  a.download='invoices-'+(label||new Date().toISOString().slice(0,10))+'.csv';
   document.body.appendChild(a);a.click();document.body.removeChild(a);
   setTimeout(function(){URL.revokeObjectURL(a.href);},1000);
 }
@@ -474,6 +476,79 @@ function Btn(props){
   return h('button',{onClick:props.onClick,disabled:props.disabled,className:'btn btn-'+(props.cls||'sec'),style:props.style},props.children);
 }
 
+// ── EXPORT DIALOG ─────────────────────────────────────────────────────────────
+var MONTH_NAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
+var QUARTER_NAMES=['Q1 · January – March','Q2 · April – June','Q3 · July – September','Q4 · October – December'];
+function ExportDialog(props){
+  var eligible=props.sessions.filter(function(s){return s.status!=='draft';});
+  var now=new Date();
+  var years=[now.getFullYear()];
+  eligible.forEach(function(s){var y=new Date(s.createdAt).getFullYear();if(!isNaN(y)&&years.indexOf(y)<0)years.push(y);});
+  years.sort(function(a,b){return b-a;});
+  var _m=useState('new'),mode=_m[0],setMode=_m[1];
+  var _y=useState(now.getFullYear()),year=_y[0],setYear=_y[1];
+  var _mo=useState(now.getMonth()),month=_mo[0],setMonth=_mo[1];
+  var _q=useState(Math.floor(now.getMonth()/3)+1),quarter=_q[0],setQuarter=_q[1];
+  useEffect(function(){
+    function onKey(e){ if(e.key==='Escape')props.onClose(); }
+    document.addEventListener('keydown',onKey);
+    return function(){document.removeEventListener('keydown',onKey);};
+  },[]);
+  var list,label;
+  if(mode==='new'){
+    list=eligible.filter(function(s){return !s.exportedAt;});
+    label=now.toISOString().slice(0,10)+'-new';
+  } else {
+    list=eligible.filter(function(s){
+      var d=new Date(s.createdAt);
+      if(d.getFullYear()!==year)return false;
+      if(mode==='month')return d.getMonth()===month;
+      if(mode==='quarter')return Math.floor(d.getMonth()/3)+1===quarter;
+      return true;
+    });
+    label=mode==='month'?year+'-'+String(month+1).padStart(2,'0'):(mode==='quarter'?year+'-Q'+quarter:String(year));
+  }
+  var total=list.reduce(function(t,s){return t+calcTotal(s);},0);
+  var MODES=[{id:'new',label:'New only'},{id:'month',label:'Monthly'},{id:'quarter',label:'Quarterly'},{id:'year',label:'Yearly'}];
+  function yearSelect(){
+    return h('div',null,h('label',{className:'lbl'},'Year'),
+      h('select',{className:'inp',value:year,onChange:function(e){setYear(parseInt(e.target.value,10));}},
+        years.map(function(y){return h('option',{key:y,value:y},y);})));
+  }
+  return h('div',{className:'modal-bg',onMouseDown:function(e){if(e.target===e.currentTarget)props.onClose();}},
+    h('div',{className:'modal card',role:'dialog','aria-modal':'true','aria-label':'Export invoices'},
+      h('div',{style:{fontSize:18,fontWeight:600,marginBottom:4}},'Export invoices'),
+      h('div',{style:{fontSize:13,color:'var(--text2)',marginBottom:16}},'Sent and paid invoices, downloaded as a CSV for QuickBooks.'),
+      h('div',{className:'grid2',style:{marginBottom:16,gap:8}},
+        MODES.map(function(m){
+          return h('button',{key:m.id,onClick:function(){setMode(m.id);},className:'btn '+(mode===m.id?'btn-acc':'btn-sec'),style:{justifyContent:'center',padding:'9px'}},m.label);
+        })
+      ),
+      mode==='month'&&h('div',{className:'grid2',style:{marginBottom:16}},
+        yearSelect(),
+        h('div',null,h('label',{className:'lbl'},'Month'),
+          h('select',{className:'inp',value:month,onChange:function(e){setMonth(parseInt(e.target.value,10));}},
+            MONTH_NAMES.map(function(n,i){return h('option',{key:n,value:i},n);})))
+      ),
+      mode==='quarter'&&h('div',{className:'grid2',style:{marginBottom:16}},
+        yearSelect(),
+        h('div',null,h('label',{className:'lbl'},'Quarter'),
+          h('select',{className:'inp',value:quarter,onChange:function(e){setQuarter(parseInt(e.target.value,10));}},
+            QUARTER_NAMES.map(function(n,i){return h('option',{key:n,value:i+1},n);})))
+      ),
+      mode==='year'&&h('div',{style:{marginBottom:16}},yearSelect()),
+      h('div',{style:{background:'var(--card2)',borderRadius:'var(--radius)',padding:'11px 14px',marginBottom:18,fontSize:13}},
+        h('div',{style:{fontSize:15,fontWeight:600,color:list.length?'var(--acc)':'var(--text2)'}},list.length+' invoice'+(list.length===1?'':'s')+' · $'+total.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2})),
+        h('div',{style:{color:'var(--text2)',marginTop:3}},mode==='new'?'Sent or paid invoices not exported yet.':'Includes invoices you have exported before. Grouped by invoice date, calendar year.')
+      ),
+      h('div',{style:{display:'flex',justifyContent:'flex-end',gap:8}},
+        h('button',{onClick:props.onClose,style:{background:'none',border:'none',color:'var(--text2)',cursor:'pointer',padding:'8px 14px'}},'Cancel'),
+        h(Btn,{cls:'acc',onClick:function(){props.onRun(list,label);},style:{fontSize:14,padding:'8px 18px',opacity:list.length?1:0.5}},'⬇ Download CSV')
+      )
+    )
+  );
+}
+
 // ── ACCOUNT MENU ──────────────────────────────────────────────────────────────
 function Ico(props){
   return h('svg',{width:17,height:17,viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round','aria-hidden':'true',style:{flexShrink:0}},
@@ -482,6 +557,7 @@ function Ico(props){
 var ICO_CARET=['M6 9l6 6l6 -6'];
 var ICO_SLIDERS=['M4 6h9','M17 6h3','M13 6a2 2 0 1 0 4 0a2 2 0 1 0 -4 0','M4 12h3','M11 12h9','M7 12a2 2 0 1 0 4 0a2 2 0 1 0 -4 0','M4 18h11','M19 18h1','M15 18a2 2 0 1 0 4 0a2 2 0 1 0 -4 0'];
 var ICO_HELP=['M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0','M12 17v.01','M12 13.5a1.5 1.5 0 0 1 1 -1.5a2.6 2.6 0 1 0 -3 -4'];
+var ICO_DOWNLOAD=['M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2','M7 11l5 5l5 -5','M12 4v12'];
 var ICO_LOGOUT=['M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2','M9 12h12l-3 -3','M18 15l3 -3'];
 
 function AccountMenu(props){
@@ -509,6 +585,8 @@ function AccountMenu(props){
       h('div',{className:'menu-sep'}),
       item(ICO_SLIDERS,'Settings',props.onSettings,props.page==='settings'),
       item(ICO_HELP,'Help',props.onHelp,props.page==='help'),
+      h('div',{className:'menu-sep'}),
+      item(ICO_DOWNLOAD,'Export…',props.onExport,false),
       h('div',{className:'menu-sep'}),
       item(ICO_LOGOUT,'Sign out',props.onSignOut,false)
     )
@@ -570,8 +648,6 @@ function SessionsView(props){
         h('p',{style:{fontSize:13,color:'var(--text2)',margin:'3px 0 0'}},'Session log and invoicing for Blue Amsterdam')
       ),
       h('div',{style:{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}},
-        h(Btn,{onClick:function(){onExport(false);},disabled:newCount===0,style:{fontSize:13,padding:'8px 12px',opacity:newCount===0?0.5:1}},'⬇ Export CSV ('+newCount+' new)'),
-        h(Btn,{onClick:function(){onExport(true);},style:{fontSize:13,padding:'8px 12px'}},'Export all'),
         h(Btn,{onClick:onNew,cls:'acc',style:{fontSize:13,padding:'8px 15px'}},'+ New InVoice')
       )
     ),
@@ -974,7 +1050,7 @@ function HelpView(props){
         h('li',null,h('strong',null,'Outstanding'),' — invoices marked Sent that you haven\'t been paid for yet.'),
         h('li',null,h('strong',null,'All sessions'),' — how many you\'ve logged.')
       ),
-      h(HelpP,null,'Use the ',h('strong',null,'search box'),' above the list to find a session by client, song, invoice number, date or status. The ',h('strong',null,'⬇ Export CSV'),' button downloads your sent and paid invoices as a spreadsheet file (for QuickBooks); afterwards you\'ll be asked whether to mark them exported, which shows a small green ✓ on each row. ',h('strong',null,'Export all'),' re-downloads everything.'),
+      h(HelpP,null,'Use the ',h('strong',null,'search box'),' above the list to find a session by client, song, invoice number, date or status. To send invoices to QuickBooks, open the account menu (top right) and choose ',h('strong',null,'Export…'),'. Pick ',h('strong',null,'New only'),' (invoices not exported yet), ',h('strong',null,'Monthly'),', ',h('strong',null,'Quarterly'),' (Q1 is January to March, Q2 April to June, and so on), or ',h('strong',null,'Yearly'),' (the calendar year), then download the CSV. Afterwards you\'ll be asked whether to mark the new ones as exported, which shows a small green ✓ on each row.'),
       h(HelpMock,{caption:'A session row'},
         h('div',{className:'list-item',style:{flexWrap:'wrap'}},
           h('div',{style:{flex:1,minWidth:150}},
@@ -1059,6 +1135,7 @@ function App(){
   var _st=useState(DEFAULT_SETTINGS),settings=_st[0],setSettings=_st[1];
   var _dl=useState(false),dataLoading=_dl[0],setDataLoading=_dl[1];
   var _ae=useState(''),appError=_ae[0],setAppError=_ae[1];
+  var _eo=useState(false),exportOpen=_eo[0],setExportOpen=_eo[1];
 
   useEffect(function(){
     sb.auth.getSession().then(function(r){
@@ -1112,10 +1189,9 @@ function App(){
       setCurrent(function(c){return c&&c.id===id?Object.assign({},c,{status:status}):c;});
     }).catch(function(err){setAppError(err.message);});
   }
-  function handleExport(all){
-    var list=sessions.filter(function(x){return x.status!=='draft'&&(all||!x.exportedAt);});
+  function runExport(list,label){
     if(!list.length){setAppError('Nothing to export.');return;}
-    downloadInvoicesCsv(list);
+    downloadInvoicesCsv(list,label);
     setTimeout(function(){
       var todo=list.filter(function(x){return !x.exportedAt;});
       var msg=todo.length
@@ -1160,10 +1236,11 @@ function App(){
           return h('button',{key:t.id,onClick:function(){setPage(t.id);goList();window.scrollTo(0,0);},style:{padding:'6px 13px',fontSize:12,fontWeight:500,borderRadius:'var(--radius)',cursor:'pointer',border:'0.5px solid',background:page===t.id?'var(--acc-bg)':'transparent',color:page===t.id?'var(--acc)':'var(--text2)',borderColor:page===t.id?'var(--acc-bo)':'transparent'}},t.label);
         })
       ),
-      h(AccountMenu,{email:user.email,page:page,onSettings:function(){setPage('settings');goList();window.scrollTo(0,0);},onHelp:function(){setPage('help');goList();window.scrollTo(0,0);},onSignOut:function(){sb.auth.signOut();}})
+      h(AccountMenu,{email:user.email,page:page,onExport:function(){setExportOpen(true);},onSettings:function(){setPage('settings');goList();window.scrollTo(0,0);},onHelp:function(){setPage('help');goList();window.scrollTo(0,0);},onSignOut:function(){sb.auth.signOut();}})
     ),
+    exportOpen&&h(ExportDialog,{sessions:sessions,onClose:function(){setExportOpen(false);},onRun:function(list,label){setExportOpen(false);runExport(list,label);}}),
     h('div',{className:'main'},
-      page==='sessions'&&view==='list'&&h(SessionsView,{sessions:sessions,onNew:function(){setCurrent(null);setDuplicateFrom(null);setView('form');},onEdit:function(s){setCurrent(s);setDuplicateFrom(null);setView('form');},onView:function(s){setCurrent(s);setView('invoice');},onDelete:handleDeleteSession,onStatus:handleStatusChange,onDuplicate:handleDuplicateSession,onExport:handleExport,onClearExport:handleClearExport}),
+      page==='sessions'&&view==='list'&&h(SessionsView,{sessions:sessions,onNew:function(){setCurrent(null);setDuplicateFrom(null);setView('form');},onEdit:function(s){setCurrent(s);setDuplicateFrom(null);setView('form');},onView:function(s){setCurrent(s);setView('invoice');},onDelete:handleDeleteSession,onStatus:handleStatusChange,onDuplicate:handleDuplicateSession,onClearExport:handleClearExport}),
       page==='sessions'&&view==='form'&&h(SessionForm,{session:current,settings:settings,nextInvoice:genInv(sessions),duplicateFrom:duplicateFrom,onCancel:goList,onSave:handleSaveSession,onStatus:handleStatusChange}),
       page==='sessions'&&view==='invoice'&&current&&h(InvoiceView,{session:current,settings:settings,onBack:goList,onEdit:function(){setView('form');},onPrintInvoice:function(){openPrintInvoice(current,settings);},onPrintWFH:function(){openPrintWFH(current);},onEmail:function(){openMailto(current,settings);},onStatus:handleStatusChange}),
       page==='help'&&h(HelpView,{onBack:function(){setPage('sessions');goList();}}),
