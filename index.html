@@ -92,9 +92,20 @@
     .modal-bg { position:fixed; inset:0; background:rgba(0,0,0,.62); display:flex; align-items:center; justify-content:center; padding:16px; z-index:200; }
     .modal { width:100%; max-width:440px; max-height:100%; overflow:auto; background:var(--card); }
     .menu-sep { height:1px; background:var(--border); margin:6px 4px; }
+    .menu-mobile-only { display:none; }
     @media (max-width: 640px) {
-      .header { grid-template-columns:1fr auto; row-gap:8px; }
-      .header-nav { grid-column:1 / -1; grid-row:2; }
+      .header { grid-template-columns:1fr auto; padding:10px 16px; row-gap:0; }
+      .header-nav { display:none; }
+      .menu-mobile-only { display:flex; }
+      .stats-grid { grid-template-columns:repeat(3,1fr); gap:8px; }
+      .metric { padding:10px; }
+      .metric > div:nth-child(1) { font-size:9px !important; letter-spacing:.08em !important; }
+      .metric > div:nth-child(2) { font-size:20px !important; }
+      .metric > div:nth-child(3) { font-size:11px !important; }
+      .list-item { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:start; gap:8px 12px; padding:13px; }
+      .li-total { text-align:right; min-width:0; }
+      .li-actions { grid-column:1 / -1; display:flex; flex-wrap:wrap; gap:6px; }
+      .li-actions .btn-status { flex:1 1 100px; min-width:0; }
     }
     .list-item { transition:border-color .15s; }
     .list-item:hover { border-color:rgba(255,111,174,.35); }
@@ -558,6 +569,7 @@ var ICO_CARET=['M6 9l6 6l6 -6'];
 var ICO_SLIDERS=['M4 6h9','M17 6h3','M13 6a2 2 0 1 0 4 0a2 2 0 1 0 -4 0','M4 12h3','M11 12h9','M7 12a2 2 0 1 0 4 0a2 2 0 1 0 -4 0','M4 18h11','M19 18h1','M15 18a2 2 0 1 0 4 0a2 2 0 1 0 -4 0'];
 var ICO_HELP=['M3 12a9 9 0 1 0 18 0a9 9 0 1 0 -18 0','M12 17v.01','M12 13.5a1.5 1.5 0 0 1 1 -1.5a2.6 2.6 0 1 0 -3 -4'];
 var ICO_DOWNLOAD=['M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2','M7 11l5 5l5 -5','M12 4v12'];
+var ICO_LIST=['M9 6h11','M9 12h11','M9 18h11','M5 6v.01','M5 12v.01','M5 18v.01'];
 var ICO_LOGOUT=['M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2','M9 12h12l-3 -3','M18 15l3 -3'];
 
 function AccountMenu(props){
@@ -571,8 +583,8 @@ function AccountMenu(props){
     document.addEventListener('keydown',onKey);
     return function(){document.removeEventListener('mousedown',onDoc);document.removeEventListener('keydown',onKey);};
   },[open]);
-  function item(icon,label,fn,active){
-    return h('button',{className:'menu-it'+(active?' on':''),role:'menuitem',onClick:function(){setOpen(false);fn();}},h(Ico,{d:icon}),label);
+  function item(icon,label,fn,active,extra){
+    return h('button',{className:'menu-it'+(active?' on':'')+(extra?' '+extra:''),role:'menuitem',onClick:function(){setOpen(false);fn();}},h(Ico,{d:icon}),label);
   }
   var initial=(props.email||'?').charAt(0).toUpperCase();
   return h('div',{className:'acct',ref:ref},
@@ -583,6 +595,7 @@ function AccountMenu(props){
     open&&h('div',{className:'acct-menu',role:'menu'},
       h('div',{className:'acct-who'},h('small',null,'Signed in as'),props.email),
       h('div',{className:'menu-sep'}),
+      item(ICO_LIST,'Sessions',props.onSessions,props.page==='sessions','menu-mobile-only'),
       item(ICO_SLIDERS,'Settings',props.onSettings,props.page==='settings'),
       item(ICO_HELP,'Help',props.onHelp,props.page==='help'),
       h('div',{className:'menu-sep'}),
@@ -642,14 +655,12 @@ function SessionsView(props){
   var counts={};
   Object.keys(STATUS_CFG).forEach(function(k){counts[k]=sessions.filter(function(s){return s.status===k;}).length;});
   return h('div',null,
-    h('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:22}},
-      h('div',null,
+    h('div',{style:{marginBottom:22}},
+      h('div',{style:{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12}},
         h('h1',{style:{fontSize:20,fontWeight:600,margin:0}},'Sessions'),
-        h('p',{style:{fontSize:13,color:'var(--text2)',margin:'3px 0 0'}},'Session log and invoicing for Blue Amsterdam')
+        h(Btn,{onClick:onNew,cls:'acc',style:{fontSize:13,padding:'8px 15px',whiteSpace:'nowrap'}},'+ New InVoice')
       ),
-      h('div',{style:{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}},
-        h(Btn,{onClick:onNew,cls:'acc',style:{fontSize:13,padding:'8px 15px'}},'+ New InVoice')
-      )
+      h('p',{style:{fontSize:13,color:'var(--text2)',margin:'3px 0 0'}},'Session log and invoicing for Blue Amsterdam')
     ),
     h('div',{className:'stats-grid',style:{marginBottom:22}},
       [{label:'Total paid',value:'$'+paid.toLocaleString(),sub:(counts.paid||0)+' sessions'},
@@ -1236,7 +1247,7 @@ function App(){
           return h('button',{key:t.id,onClick:function(){setPage(t.id);goList();window.scrollTo(0,0);},style:{padding:'6px 13px',fontSize:12,fontWeight:500,borderRadius:'var(--radius)',cursor:'pointer',border:'0.5px solid',background:page===t.id?'var(--acc-bg)':'transparent',color:page===t.id?'var(--acc)':'var(--text2)',borderColor:page===t.id?'var(--acc-bo)':'transparent'}},t.label);
         })
       ),
-      h(AccountMenu,{email:user.email,page:page,onExport:function(){setExportOpen(true);},onSettings:function(){setPage('settings');goList();window.scrollTo(0,0);},onHelp:function(){setPage('help');goList();window.scrollTo(0,0);},onSignOut:function(){sb.auth.signOut();}})
+      h(AccountMenu,{email:user.email,page:page,onSessions:function(){setPage('sessions');goList();window.scrollTo(0,0);},onExport:function(){setExportOpen(true);},onSettings:function(){setPage('settings');goList();window.scrollTo(0,0);},onHelp:function(){setPage('help');goList();window.scrollTo(0,0);},onSignOut:function(){sb.auth.signOut();}})
     ),
     exportOpen&&h(ExportDialog,{sessions:sessions,onClose:function(){setExportOpen(false);},onRun:function(list,label){setExportOpen(false);runExport(list,label);}}),
     h('div',{className:'main'},
